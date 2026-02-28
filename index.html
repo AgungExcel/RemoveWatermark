@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agung Studio HD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Montserrat:wght@800&family=Poppins:wght@700&display=swap" rel="stylesheet">
+    <style>
+        #canvas-wrapper {
+            touch-action: none;
+            background-image: repeating-linear-gradient(45deg, #e5e7eb 25%, transparent 25%, transparent 75%, #e5e7eb 75%, #e5e7eb), repeating-linear-gradient(45deg, #e5e7eb 25%, #f9fafb 25%, #f9fafb 75%, #e5e7eb 75%, #e5e7eb);
+            background-position: 0 0, 10px 10px;
+            background-size: 20px 20px;
+        }
+        
+        #brush-cursor {
+            pointer-events: none;
+            position: fixed;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            z-index: 50;
+        }
+
+        /* Mode Gelap (Dark Theme) Styles */
+        html.dark body { background-color: #111827; color: #f3f4f6; }
+        html.dark header, html.dark aside, html.dark .bg-white { background-color: #1f2937 !important; border-color: #374151 !important; }
+        html.dark .bg-gray-50 { background-color: #374151 !important; border-color: #4b5563 !important; }
+        html.dark .bg-gray-200 { background-color: #111827 !important; }
+        html.dark .text-gray-800, html.dark .text-gray-700 { color: #f3f4f6 !important; }
+        html.dark .text-gray-500, html.dark .text-gray-400 { color: #9ca3af !important; }
+        html.dark input[type="text"], html.dark textarea, html.dark select { 
+            background-color: #4b5563 !important; 
+            border-color: #6b7280 !important; 
+            color: #ffffff !important; 
+        }
+        html.dark .bg-blue-50 { background-color: rgba(29, 78, 216, 0.2) !important; border-color: rgba(29, 78, 216, 0.4) !important; }
+        html.dark .bg-purple-50 { background-color: rgba(126, 34, 206, 0.2) !important; border-color: rgba(126, 34, 206, 0.4) !important; }
+        html.dark .text-blue-800 { color: #93c5fd !important; }
+        html.dark .text-purple-800 { color: #d8b4fe !important; }
+        html.dark .border-b, html.dark .border-r, html.dark .border-t, html.dark hr { border-color: #374151 !important; }
+        html.dark #canvas-wrapper {
+            background-image: repeating-linear-gradient(45deg, #1f2937 25%, transparent 25%, transparent 75%, #1f2937 75%, #1f2937), repeating-linear-gradient(45deg, #1f2937 25%, #111827 25%, #111827 75%, #1f2937 75%, #1f2937);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans h-screen flex flex-col overflow-hidden transition-colors duration-300">
+
+    <header class="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-2">
+            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <h1 class="text-xl font-bold text-gray-800">Agung Studio <span class="text-blue-600">HD</span></h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="text-sm text-gray-500 hidden sm:block">Watermark Remover & Thumbnail Maker</div>
+            <button id="theme-toggle" class="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition" title="Ganti Tema">
+                <!-- Ikon Bulan (Dark Mode) -->
+                <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                <!-- Ikon Matahari (Light Mode) -->
+                <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden">
+        
+        <aside class="w-80 bg-white border-r shadow-lg flex flex-col overflow-y-auto shrink-0 z-40 relative">
+            <div class="p-6 flex flex-col h-full">
+                
+                <section class="mb-6">
+                    <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <svg class="w-6 h-6 mb-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                            <p class="text-xs text-gray-500"><span class="font-semibold">Unggah Gambar</span> (HD)</p>
+                        </div>
+                        <input id="image-upload" type="file" class="hidden" accept="image/*" />
+                    </label>
+                </section>
+
+                <div id="tools-panel" class="flex-1 flex flex-col opacity-50 pointer-events-none transition-opacity duration-300">
+                    
+                    <div class="flex border-b mb-4">
+                        <button id="tab-watermark" class="flex-1 py-2 text-sm font-bold border-b-2 border-blue-600 text-blue-600 transition">Hapus Watermark</button>
+                        <button id="tab-thumbnail" class="flex-1 py-2 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition">Buat Thumbnail</button>
+                    </div>
+
+                    <!-- Panel Watermark -->
+                    <div id="panel-watermark" class="space-y-4 flex-1">
+                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                            <p class="text-xs text-blue-800 mb-3"><b>Healing Brush:</b> Coret pada area watermark. AI lokal akan menutupi area tersebut dengan warna di sekitarnya.</p>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Ukuran Kuas: <span id="brush-size-val">30</span>px</label>
+                                <input type="range" id="brush-size" min="5" max="100" value="30" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel Thumbnail -->
+                    <div id="panel-thumbnail" class="space-y-4 flex-1 hidden overflow-y-auto pr-1 pb-4">
+                        <div class="bg-purple-50 p-3 rounded-xl border border-purple-100 mb-2">
+                            <p class="text-xs text-purple-800"><b>Petunjuk:</b> Ketik enter untuk baris baru. Teks/Ikon bisa digeser langsung di gambar.</p>
+                        </div>
+
+                        <!-- Ikon / Stiker Controls -->
+                        <div class="p-3 border rounded-xl bg-gray-50 shadow-sm space-y-2 border-dashed border-gray-300">
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide">Sisipkan Ikon / Logo</label>
+                            <input type="file" id="icon-upload" class="text-xs w-full mb-1" accept="image/*">
+                            
+                            <div id="icon-controls" class="hidden space-y-2 pt-2 border-t border-gray-200">
+                                <label class="block text-xs text-gray-500">Ukuran Ikon Terpilih</label>
+                                <input type="range" id="icon-size" min="5" max="100" value="20" class="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[10px] text-gray-400">Klik ikon di gambar untuk memilih</span>
+                                    <button id="btn-delete-icon" class="text-[11px] font-bold text-red-500 hover:text-red-700">Hapus Ikon Ini</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top Text Controls -->
+                        <div class="p-3 border rounded-xl bg-white shadow-sm space-y-2">
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide">Teks Atas</label>
+                            <textarea id="text-top-val" rows="2" class="w-full text-sm border-gray-300 rounded-lg shadow-sm p-2 border focus:ring-purple-500 focus:border-purple-500 resize-none">JUDUL MENARIK</textarea>
+                            <div class="flex gap-2">
+                                <select id="text-top-font" class="flex-1 text-sm border-gray-300 rounded-lg p-2 border">
+                                    <option value="Montserrat" selected>Montserrat (Modern)</option>
+                                    <option value="Anton">Anton (Tebal)</option>
+                                    <option value="Bebas Neue">Bebas Neue (Tinggi)</option>
+                                    <option value="Poppins">Poppins (Bulat)</option>
+                                </select>
+                                <input type="color" id="text-top-color" value="#ffffff" class="w-10 h-10 rounded cursor-pointer border-0 p-0">
+                            </div>
+                            <div class="flex gap-2 items-center">
+                                <div class="flex-1">
+                                    <label class="block text-xs text-gray-500 mb-1">Gaya Tulisan</label>
+                                    <select id="text-top-style" class="w-full text-xs border-gray-300 rounded-lg p-1.5 border">
+                                        <option value="youtube">Tegas (Outline)</option>
+                                        <option value="neon">Neon Bercahaya</option>
+                                        <option value="3d">3D Timbul</option>
+                                        <option value="glitch">Retro Glitch</option>
+                                    </select>
+                                </div>
+                                <div class="flex-1">
+                                    <label class="block text-xs text-gray-500 mb-1">Ukuran</label>
+                                    <input type="range" id="text-top-size" min="2" max="25" value="8" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Text Controls -->
+                        <div class="p-3 border rounded-xl bg-white shadow-sm space-y-2">
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide">Teks Bawah</label>
+                            <textarea id="text-bottom-val" rows="2" class="w-full text-sm border-gray-300 rounded-lg shadow-sm p-2 border focus:ring-purple-500 focus:border-purple-500 resize-none">Agung Pro Audio</textarea>
+                            <div class="flex gap-2">
+                                <select id="text-bottom-font" class="flex-1 text-sm border-gray-300 rounded-lg p-2 border">
+                                    <option value="Montserrat" selected>Montserrat (Modern)</option>
+                                    <option value="Anton">Anton (Tebal)</option>
+                                    <option value="Bebas Neue">Bebas Neue (Tinggi)</option>
+                                    <option value="Poppins">Poppins (Bulat)</option>
+                                </select>
+                                <input type="color" id="text-bottom-color" value="#ffff00" class="w-10 h-10 rounded cursor-pointer border-0 p-0">
+                            </div>
+                            <div class="flex gap-2 items-center">
+                                <div class="flex-1">
+                                    <label class="block text-xs text-gray-500 mb-1">Gaya Tulisan</label>
+                                    <select id="text-bottom-style" class="w-full text-xs border-gray-300 rounded-lg p-1.5 border">
+                                        <option value="youtube">Tegas (Outline)</option>
+                                        <option value="neon">Neon Bercahaya</option>
+                                        <option value="3d">3D Timbul</option>
+                                        <option value="glitch">Retro Glitch</option>
+                                    </select>
+                                </div>
+                                <div class="flex-1">
+                                    <label class="block text-xs text-gray-500 mb-1">Ukuran</label>
+                                    <input type="range" id="text-bottom-size" min="2" max="25" value="6" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="border-gray-200 my-4">
+
+                    <!-- Actions -->
+                    <section class="space-y-3 mt-auto shrink-0">
+                        <button id="btn-reset" class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-xl transition flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            Reset ke Awal
+                        </button>
+                        <button id="btn-download" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Simpan & Unduh HD
+                        </button>
+                    </section>
+
+                </div>
+            </div>
+        </aside>
+
+        <!-- Canvas Area -->
+        <section class="flex-1 bg-gray-200 relative overflow-auto flex items-center justify-center p-8" id="canvas-container">
+            
+            <div id="empty-state" class="text-center text-gray-400 absolute inset-0 flex flex-col items-center justify-center z-0 pointer-events-none">
+                <svg class="w-24 h-24 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <p class="text-lg font-medium">Belum ada gambar</p>
+                <p class="text-sm">Silakan unggah gambar Anda</p>
+            </div>
+
+            <div id="canvas-wrapper" class="relative hidden shadow-2xl rounded max-w-full max-h-full">
+                <canvas id="main-canvas" class="block w-full h-auto max-h-[85vh] object-contain cursor-crosshair"></canvas>
+                <canvas id="mask-canvas" class="absolute top-0 left-0 w-full h-full pointer-events-none opacity-50 z-20"></canvas>
+                <canvas id="text-canvas" class="absolute top-0 left-0 w-full h-full pointer-events-none z-30 hidden"></canvas>
+            </div>
+            
+            <div id="processing-indicator" class="hidden absolute top-4 right-4 bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow border border-blue-100 flex items-center gap-3 z-50">
+                <div class="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-600"></div>
+                <span class="text-sm font-medium text-gray-700">Menyembuhkan gambar...</span>
+            </div>
+
+            <div id="brush-cursor"></div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- GLOBAL VARIABLES ---
+        let appMode = 'watermark'; 
+        let originalImageData = null; 
+        let currentImgElement = new Image();
+        
+        const uploadInput = document.getElementById('image-upload');
+        const toolsPanel = document.getElementById('tools-panel');
+        const emptyState = document.getElementById('empty-state');
+        const canvasWrapper = document.getElementById('canvas-wrapper');
+        const processingIndicator = document.getElementById('processing-indicator');
+        const btnDownload = document.getElementById('btn-download');
+        const btnReset = document.getElementById('btn-reset');
+
+        const tabWatermark = document.getElementById('tab-watermark');
+        const tabThumbnail = document.getElementById('tab-thumbnail');
+        const panelWatermark = document.getElementById('panel-watermark');
+        const panelThumbnail = document.getElementById('panel-thumbnail');
+        
+        const canvas = document.getElementById('main-canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const maskCanvas = document.getElementById('mask-canvas');
+        const maskCtx = maskCanvas.getContext('2d', { willReadFrequently: true });
+        const textCanvas = document.getElementById('text-canvas');
+        const textCtx = textCanvas.getContext('2d');
+
+        // Watermark Tools
+        const brushSizeInput = document.getElementById('brush-size');
+        const brushSizeVal = document.getElementById('brush-size-val');
+        const brushCursor = document.getElementById('brush-cursor');
+        let isDrawing = false;
+        let brushSize = 30;
+        let minX = 0, minY = 0, maxX = 0, maxY = 0;
+
+        // Thumbnail Tools (Text & Icons)
+        let tData = {
+            top: { text: "JUDUL MENARIK", font: "Montserrat", color: "#ffffff", sizePct: 8, style: "youtube", x: 0, y: 0 },
+            bottom: { text: "Agung Pro Audio", font: "Montserrat", color: "#ffff00", sizePct: 6, style: "youtube", x: 0, y: 0 }
+        };
+        
+        let iconsData = []; // Array of {img, x, y, sizePct}
+        let selectedIconIndex = -1;
+
+        let dragTarget = null; // {type: 'text', key: 'top'} OR {type: 'icon', index: 0}
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        // --- INIT & TABS ---
+        document.fonts.ready.then(() => { if(originalImageData) drawOverlays(); });
+
+        tabWatermark.addEventListener('click', () => switchTab('watermark'));
+        tabThumbnail.addEventListener('click', () => switchTab('thumbnail'));
+
+        function switchTab(mode) {
+            appMode = mode;
+            if (mode === 'watermark') {
+                tabWatermark.classList.add('border-blue-600', 'text-blue-600');
+                tabWatermark.classList.remove('border-transparent', 'text-gray-400');
+                tabThumbnail.classList.add('border-transparent', 'text-gray-400');
+                tabThumbnail.classList.remove('border-blue-600', 'text-blue-600');
+                
+                panelWatermark.classList.remove('hidden');
+                panelThumbnail.classList.add('hidden');
+                textCanvas.classList.add('hidden');
+                canvas.style.cursor = 'none';
+                updateBrushCursorSize();
+            } else {
+                tabThumbnail.classList.add('border-blue-600', 'text-blue-600');
+                tabThumbnail.classList.remove('border-transparent', 'text-gray-400');
+                tabWatermark.classList.add('border-transparent', 'text-gray-400');
+                tabWatermark.classList.remove('border-blue-600', 'text-blue-600');
+                
+                panelWatermark.classList.add('hidden');
+                panelThumbnail.classList.remove('hidden');
+                textCanvas.classList.remove('hidden');
+                canvas.style.cursor = 'grab';
+                brushCursor.style.display = 'none';
+                
+                drawOverlays(); // Pastikan tergambar ulang saat tab aktif
+            }
+        }
+
+
+        // --- EVENT LISTENERS ---
+
+        uploadInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                currentImgElement.onload = () => setupCanvas(currentImgElement);
+                currentImgElement.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        brushSizeInput.addEventListener('input', (e) => {
+            brushSize = parseInt(e.target.value);
+            brushSizeVal.textContent = brushSize;
+            if(appMode === 'watermark') updateBrushCursorSize();
+        });
+
+        // Mouse & Touch Routing
+        canvas.addEventListener('mousedown', handlePointerDown);
+        canvas.addEventListener('mousemove', handlePointerMove);
+        window.addEventListener('mouseup', handlePointerUp);
+        
+        canvas.addEventListener('touchstart', (e) => {
+            if(e.touches.length > 1) return; // Ignore multi-touch
+            e.preventDefault();
+            const touch = e.touches[0];
+            handlePointerDown({ clientX: touch.clientX, clientY: touch.clientY });
+        }, { passive: false });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            handlePointerMove({ clientX: touch.clientX, clientY: touch.clientY });
+        }, { passive: false });
+        
+        window.addEventListener('touchend', handlePointerUp);
+
+        canvasWrapper.addEventListener('mousemove', (e) => {
+            if (appMode === 'watermark' && !isDrawing) {
+                brushCursor.style.display = 'block';
+                brushCursor.style.left = `${e.clientX}px`;
+                brushCursor.style.top = `${e.clientY}px`;
+            } else {
+                brushCursor.style.display = 'none';
+            }
+        });
+        canvasWrapper.addEventListener('mouseleave', () => brushCursor.style.display = 'none');
+
+        // Download & Reset
+        btnReset.addEventListener('click', () => {
+            if (originalImageData) currentImgElement.src = originalImageData;
+        });
+
+        btnDownload.addEventListener('click', () => {
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = canvas.width;
+            exportCanvas.height = canvas.height;
+            const exportCtx = exportCanvas.getContext('2d');
+            
+            exportCtx.drawImage(canvas, 0, 0);
+            
+            // Hapus seleksi sementara saat download
+            const tempSelected = selectedIconIndex;
+            selectedIconIndex = -1;
+            drawOverlays(); 
+            
+            if (!textCanvas.classList.contains('hidden')) {
+                 exportCtx.drawImage(textCanvas, 0, 0); 
+            }
+
+            // Kembalikan seleksi
+            selectedIconIndex = tempSelected;
+            drawOverlays();
+
+            const dataURL = exportCanvas.toDataURL('image/jpeg', 0.95);
+            const a = document.createElement('a');
+            a.href = dataURL;
+            a.download = `Thumbnail-HD-${Date.now()}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+
+        // UI Binds for Text
+        const bindTextData = (key, prop, id) => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                tData[key][prop] = prop === 'sizePct' ? parseFloat(e.target.value) : e.target.value;
+                drawOverlays();
+            });
+        };
+        bindTextData('top', 'text', 'text-top-val'); bindTextData('top', 'font', 'text-top-font');
+        bindTextData('top', 'color', 'text-top-color'); bindTextData('top', 'sizePct', 'text-top-size'); bindTextData('top', 'style', 'text-top-style');
+        bindTextData('bottom', 'text', 'text-bottom-val'); bindTextData('bottom', 'font', 'text-bottom-font');
+        bindTextData('bottom', 'color', 'text-bottom-color'); bindTextData('bottom', 'sizePct', 'text-bottom-size'); bindTextData('bottom', 'style', 'text-bottom-style');
+
+        // UI Binds for Icons
+        const iconUpload = document.getElementById('icon-upload');
+        const iconSizeSlider = document.getElementById('icon-size');
+        const iconControls = document.getElementById('icon-controls');
+        const btnDeleteIcon = document.getElementById('btn-delete-icon');
+
+        iconUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const img = new Image();
+            img.onload = () => {
+                iconsData.push({
+                    img: img,
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    sizePct: 20
+                });
+                selectedIconIndex = iconsData.length - 1;
+                iconSizeSlider.value = 20;
+                updateIconUI();
+                drawOverlays();
+            };
+            img.src = URL.createObjectURL(file);
+            iconUpload.value = ''; 
+        });
+
+        iconSizeSlider.addEventListener('input', (e) => {
+            if (selectedIconIndex >= 0 && iconsData[selectedIconIndex]) {
+                iconsData[selectedIconIndex].sizePct = parseFloat(e.target.value);
+                drawOverlays();
+            }
+        });
+
+        btnDeleteIcon.addEventListener('click', () => {
+            if (selectedIconIndex >= 0) {
+                iconsData.splice(selectedIconIndex, 1);
+                selectedIconIndex = -1;
+                updateIconUI();
+                drawOverlays();
+            }
+        });
+
+        function updateIconUI() {
+            if (selectedIconIndex >= 0) {
+                iconControls.classList.remove('hidden');
+                iconSizeSlider.value = iconsData[selectedIconIndex].sizePct;
+            } else {
+                iconControls.classList.add('hidden');
+            }
+        }
+
+
+        // --- CORE FUNCTIONS ---
+
+        function setupCanvas(img) {
+            canvas.width = img.width; canvas.height = img.height;
+            maskCanvas.width = img.width; maskCanvas.height = img.height;
+            textCanvas.width = img.width; textCanvas.height = img.height;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+
+            if (!originalImageData || uploadInput.files.length > 0) {
+                originalImageData = canvas.toDataURL('image/png');
+                uploadInput.value = '';
+            }
+
+            tData.top.x = canvas.width / 2; tData.top.y = canvas.height * 0.15;
+            tData.bottom.x = canvas.width / 2; tData.bottom.y = canvas.height * 0.85;
+
+            drawOverlays();
+
+            switchTab('watermark'); 
+            canvasWrapper.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            toolsPanel.classList.remove('opacity-50', 'pointer-events-none');
+        }
+
+        function getMousePos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (evt.clientX - rect.left) * scaleX,
+                y: (evt.clientY - rect.top) * scaleY
+            };
+        }
+
+        // --- ROUTER POINTER LOGIC ---
+        function handlePointerDown(e) {
+            if (appMode === 'watermark') startDrawingMask(e);
+            else if (appMode === 'thumbnail') startDraggingOverlay(e);
+        }
+
+        function handlePointerMove(e) {
+            if (appMode === 'watermark') drawMask(e);
+            else if (appMode === 'thumbnail') dragOverlay(e);
+        }
+
+        function handlePointerUp() {
+            if (appMode === 'watermark') stopDrawingMask();
+            else if (appMode === 'thumbnail') stopDraggingOverlay();
+        }
+
+        // --- WATERMARK (INPAINT) LOGIC ---
+        function updateBrushCursorSize() {
+            const rect = canvas.getBoundingClientRect();
+            const scaleFactor = rect.width / canvas.width;
+            const visualSize = brushSize * 2 * scaleFactor;
+            brushCursor.style.width = `${visualSize}px`; brushCursor.style.height = `${visualSize}px`;
+        }
+
+        function startDrawingMask(e) {
+            isDrawing = true; brushCursor.style.display = 'none'; 
+            const pos = getMousePos(e);
+            minX = canvas.width; minY = canvas.height; maxX = 0; maxY = 0;
+            
+            maskCtx.lineCap = 'round'; maskCtx.lineJoin = 'round';
+            maskCtx.lineWidth = brushSize * 2; maskCtx.strokeStyle = 'rgba(255, 0, 0, 1)';
+            
+            maskCtx.beginPath(); maskCtx.moveTo(pos.x, pos.y);
+            expandBoundingBox(pos.x, pos.y, brushSize);
+            maskCtx.lineTo(pos.x, pos.y); maskCtx.stroke();
+        }
+
+        function drawMask(e) {
+            if (!isDrawing) return;
+            const pos = getMousePos(e);
+            maskCtx.lineTo(pos.x, pos.y); maskCtx.stroke();
+            expandBoundingBox(pos.x, pos.y, brushSize);
+        }
+
+        function stopDrawingMask() {
+            if (!isDrawing) return;
+            isDrawing = false; brushCursor.style.display = 'block'; 
+            
+            const sx = Math.max(0, Math.floor(minX)); const sy = Math.max(0, Math.floor(minY));
+            const sw = Math.min(canvas.width - sx, Math.ceil(maxX - minX)); const sh = Math.min(canvas.height - sy, Math.ceil(maxY - minY));
+
+            if (sw <= 0 || sh <= 0) return;
+
+            processingIndicator.classList.remove('hidden');
+            setTimeout(() => { runInpainting(sx, sy, sw, sh); processingIndicator.classList.add('hidden'); }, 20);
+        }
+
+        function expandBoundingBox(x, y, radius) {
+            minX = Math.min(minX, x - radius - 10); minY = Math.min(minY, y - radius - 10);
+            maxX = Math.max(maxX, x + radius + 10); maxY = Math.max(maxY, y + radius + 10);
+        }
+
+        function runInpainting(sx, sy, sw, sh) {
+            const imgData = ctx.getImageData(sx, sy, sw, sh); const maskData = maskCtx.getImageData(sx, sy, sw, sh);
+            const currentData = new Uint8ClampedArray(imgData.data); const nextData = new Uint8ClampedArray(imgData.data);
+            const mask = new Uint8Array(sw * sh);
+            
+            let maskedCount = 0;
+            for (let i = 0; i < mask.length; i++) {
+                if (maskData.data[i * 4 + 3] > 0) { mask[i] = 1; maskedCount++; }
+            }
+            if (maskedCount === 0) return;
+
+            const maxIters = 400; let iter = 0;
+            while (maskedCount > 0 && iter < maxIters) {
+                iter++; let filledInThisIter = 0;
+                for (let y = 0; y < sh; y++) {
+                    for (let x = 0; x < sw; x++) {
+                        const idx = y * sw + x;
+                        if (mask[idx] === 1) { 
+                            let r = 0, g = 0, b = 0, count = 0;
+                            for (let dy = -1; dy <= 1; dy++) {
+                                for (let dx = -1; dx <= 1; dx++) {
+                                    if (dx === 0 && dy === 0) continue;
+                                    const nx = x + dx; const ny = y + dy;
+                                    if (nx >= 0 && nx < sw && ny >= 0 && ny < sh) {
+                                        const nidx = ny * sw + nx;
+                                        if (mask[nidx] === 0) { 
+                                            const p = nidx * 4; r += currentData[p]; g += currentData[p+1]; b += currentData[p+2]; count++;
+                                        }
+                                    }
+                                }
+                            }
+                            if (count > 0) {
+                                const p = idx * 4;
+                                nextData[p] = r / count; nextData[p+1] = g / count; nextData[p+2] = b / count; nextData[p+3] = 255; 
+                                mask[idx] = 2; filledInThisIter++;
+                            } else {
+                                const p = idx * 4;
+                                nextData[p] = currentData[p]; nextData[p+1] = currentData[p+1]; nextData[p+2] = currentData[p+2]; nextData[p+3] = currentData[p+3];
+                            }
+                        }
+                    }
+                }
+                currentData.set(nextData);
+                for (let i = 0; i < mask.length; i++) { if (mask[i] === 2) { mask[i] = 0; maskedCount--; } }
+                if (filledInThisIter === 0) break; 
+            }
+
+            for (let blurPass = 0; blurPass < 2; blurPass++) {
+                const tempResult = new Uint8ClampedArray(currentData);
+                for (let y = 1; y < sh - 1; y++) {
+                    for (let x = 1; x < sw - 1; x++) {
+                        const i = (y * sw + x) * 4;
+                        if (maskData.data[i + 3] > 0) { 
+                            let r=0, g=0, b=0;
+                            for (let dy = -1; dy <= 1; dy++) {
+                                for (let dx = -1; dx <= 1; dx++) {
+                                    const p = ((y+dy) * sw + (x+dx)) * 4;
+                                    r += currentData[p]; g += currentData[p+1]; b += currentData[p+2];
+                                }
+                            }
+                            tempResult[i] = r / 9; tempResult[i+1] = g / 9; tempResult[i+2] = b / 9;
+                        }
+                    }
+                }
+                currentData.set(tempResult);
+            }
+
+            imgData.data.set(currentData); ctx.putImageData(imgData, sx, sy); maskCtx.clearRect(sx, sy, sw, sh);
+        }
+
+        // --- THUMBNAIL (TEXT & ICON DRAWER) LOGIC ---
+        
+        function wrapTextAndGetLines(ctx, text, maxWidth) {
+            let hardLines = text.split('\n');
+            let finalLines = [];
+
+            hardLines.forEach(hLine => {
+                let words = hLine.split(' ');
+                let currentLine = '';
+
+                words.forEach(word => {
+                    let testLine = currentLine + (currentLine ? ' ' : '') + word;
+                    let metrics = ctx.measureText(testLine);
+                    if (metrics.width > maxWidth && currentLine !== '') {
+                        finalLines.push(currentLine);
+                        currentLine = word;
+                    } else {
+                        currentLine = testLine;
+                    }
+                });
+                if (currentLine) finalLines.push(currentLine);
+            });
+            return finalLines;
+        }
+
+        function drawOverlays() {
+            if(!textCanvas.width) return;
+            textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
+            
+            // 1. Gambar Ikon/Stiker Terlebih Dahulu (di belakang teks)
+            iconsData.forEach((icon, index) => {
+                let w = canvas.width * (icon.sizePct / 100);
+                let h = w * (icon.img.height / icon.img.width);
+
+                if (index === selectedIconIndex) {
+                    textCtx.strokeStyle = 'rgba(0, 150, 255, 0.8)';
+                    textCtx.lineWidth = Math.max(2, canvas.width * 0.005);
+                    textCtx.setLineDash([10, 5]);
+                    textCtx.strokeRect(icon.x - w/2 - 2, icon.y - h/2 - 2, w + 4, h + 4);
+                    textCtx.setLineDash([]); // Reset
+                }
+                textCtx.drawImage(icon.img, icon.x - w/2, icon.y - h/2, w, h);
+            });
+
+            // 2. Gambar Teks
+            const keys = ['top', 'bottom'];
+            keys.forEach(k => {
+                let t = tData[k];
+                if (!t.text.trim()) return;
+
+                let pxSize = canvas.height * (t.sizePct / 100);
+                textCtx.font = `bold ${pxSize}px '${t.font}'`;
+                textCtx.textAlign = 'center';
+                textCtx.textBaseline = 'middle';
+                
+                // Max width: 90% dari canvas
+                let maxWidth = canvas.width * 0.9;
+                let lines = wrapTextAndGetLines(textCtx, t.text, maxWidth);
+                
+                let lineHeight = pxSize * 1.2;
+                let totalHeight = (lines.length - 1) * lineHeight;
+                let startY = t.y - (totalHeight / 2);
+
+                lines.forEach((line, i) => {
+                    let lineY = startY + (i * lineHeight);
+
+                    if (t.style === 'neon') {
+                        textCtx.shadowColor = t.color; textCtx.shadowBlur = pxSize * 0.4;
+                        textCtx.shadowOffsetX = 0; textCtx.shadowOffsetY = 0;
+                        textCtx.fillStyle = t.color; textCtx.fillText(line, t.x, lineY); textCtx.fillText(line, t.x, lineY); 
+                        textCtx.shadowBlur = pxSize * 0.1; textCtx.fillStyle = '#ffffff'; textCtx.fillText(line, t.x, lineY);
+                        textCtx.shadowColor = 'transparent';
+                    } else if (t.style === '3d') {
+                        textCtx.shadowColor = 'transparent';
+                        const depth = Math.max(2, Math.floor(pxSize * 0.08));
+                        textCtx.fillStyle = '#222222'; 
+                        for (let d = depth; d > 0; d--) { textCtx.fillText(line, t.x + d, lineY + d); }
+                        textCtx.fillStyle = t.color; textCtx.fillText(line, t.x, lineY);
+                        textCtx.lineWidth = pxSize * 0.02; textCtx.strokeStyle = '#ffffff'; textCtx.strokeText(line, t.x, lineY);
+                    } else if (t.style === 'glitch') {
+                        textCtx.shadowColor = 'transparent'; const offset = pxSize * 0.04;
+                        textCtx.fillStyle = '#00ffff'; textCtx.fillText(line, t.x - offset, lineY);
+                        textCtx.fillStyle = '#ff00ff'; textCtx.fillText(line, t.x + offset, lineY);
+                        textCtx.fillStyle = t.color; textCtx.fillText(line, t.x, lineY);
+                    } else {
+                        textCtx.shadowColor = 'rgba(0, 0, 0, 0.8)'; textCtx.shadowBlur = pxSize * 0.2;
+                        textCtx.shadowOffsetX = pxSize * 0.05; textCtx.shadowOffsetY = pxSize * 0.05;
+                        textCtx.lineWidth = pxSize * 0.15; textCtx.strokeStyle = '#000000'; textCtx.strokeText(line, t.x, lineY);
+                        textCtx.shadowColor = 'transparent'; textCtx.fillStyle = t.color; textCtx.fillText(line, t.x, lineY);
+                    }
+                });
+            });
+        }
+
+        function startDraggingOverlay(e) {
+            const pos = getMousePos(e);
+            
+            // Prioritas 1: Cek Ikon (karena digambar pertama, tapi kita cek dari atas/terakhir ditambah)
+            for (let i = iconsData.length - 1; i >= 0; i--) {
+                let icon = iconsData[i];
+                let w = canvas.width * (icon.sizePct / 100);
+                let h = w * (icon.img.height / icon.img.width);
+                if (pos.x >= icon.x - w/2 && pos.x <= icon.x + w/2 && pos.y >= icon.y - h/2 && pos.y <= icon.y + h/2) {
+                    dragTarget = { type: 'icon', index: i };
+                    selectedIconIndex = i;
+                    updateIconUI();
+                    dragOffsetX = pos.x - icon.x;
+                    dragOffsetY = pos.y - icon.y;
+                    canvas.style.cursor = 'grabbing';
+                    drawOverlays(); 
+                    return;
+                }
+            }
+
+            // Prioritas 2: Cek Teks (dari bawah ke atas jika tumpang tindih)
+            const keys = ['bottom', 'top'];
+            for (let k of keys) {
+                let t = tData[k];
+                if (!t.text.trim()) continue;
+
+                let pxSize = canvas.height * (t.sizePct / 100);
+                textCtx.font = `bold ${pxSize}px '${t.font}'`;
+                
+                let lines = wrapTextAndGetLines(textCtx, t.text, canvas.width * 0.9);
+                let maxWidth = 0;
+                lines.forEach(l => {
+                    let w = textCtx.measureText(l).width;
+                    if(w > maxWidth) maxWidth = w;
+                });
+                
+                let width = maxWidth;
+                let height = lines.length * pxSize * 1.2;
+
+                let left = t.x - width/2; let right = t.x + width/2;
+                let top = t.y - height/2; let bottom = t.y + height/2;
+
+                if (pos.x >= left && pos.x <= right && pos.y >= top && pos.y <= bottom) {
+                    dragTarget = { type: 'text', key: k };
+                    selectedIconIndex = -1; // Batalkan pilihan ikon jika teks ditekan
+                    updateIconUI();
+                    dragOffsetX = pos.x - t.x; dragOffsetY = pos.y - t.y;
+                    canvas.style.cursor = 'grabbing';
+                    drawOverlays();
+                    return;
+                }
+            }
+
+            // Jika klik pada tempat kosong
+            selectedIconIndex = -1;
+            updateIconUI();
+            drawOverlays();
+        }
+
+        function dragOverlay(e) {
+            if (!dragTarget) return;
+            const pos = getMousePos(e);
+            
+            if (dragTarget.type === 'text') {
+                tData[dragTarget.key].x = pos.x - dragOffsetX;
+                tData[dragTarget.key].y = pos.y - dragOffsetY;
+            } else if (dragTarget.type === 'icon') {
+                iconsData[dragTarget.index].x = pos.x - dragOffsetX;
+                iconsData[dragTarget.index].y = pos.y - dragOffsetY;
+            }
+            drawOverlays(); 
+        }
+
+        function stopDraggingOverlay() {
+            dragTarget = null;
+            if (appMode === 'thumbnail') canvas.style.cursor = 'grab';
+        }
+
+        // --- THEME TOGGLE LOGIC ---
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        function updateThemeIcon() {
+            if (document.documentElement.classList.contains('dark')) {
+                themeToggleLightIcon.classList.remove('hidden');
+                themeToggleDarkIcon.classList.add('hidden');
+            } else {
+                themeToggleDarkIcon.classList.remove('hidden');
+                themeToggleLightIcon.classList.add('hidden');
+            }
+        }
+
+        // Inisialisasi tema dari localStorage
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        updateThemeIcon();
+
+        themeToggleBtn.addEventListener('click', function() {
+            document.documentElement.classList.toggle('dark');
+            updateThemeIcon();
+            
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.setItem('color-theme', 'dark');
+            } else {
+                localStorage.setItem('color-theme', 'light');
+            }
+        });
+
+    </script>
+</body>
+</html>
